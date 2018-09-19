@@ -1734,7 +1734,7 @@ class blk(gr.sync_block):
     </param>
     <param>
       <key>dev_args</key>
-      <value>""</value>
+      <value>"recv_frame_size=8192,num_recv_frames=128"</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -1742,7 +1742,7 @@ class blk(gr.sync_block):
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(416, 84)</value>
+      <value>(416, 76)</value>
     </param>
     <param>
       <key>_rotation</key>

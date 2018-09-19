@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Gotenna Rx
-# Generated: Wed Sep 19 12:27:38 2018
+# Generated: Wed Sep 19 15:18:09 2018
 ##################################################
 
 from gnuradio import analog
@@ -38,7 +38,7 @@ class gotenna_rx(gr.top_block):
         # Blocks
         ##################################################
         self.uhd_usrp_source_0 = uhd.usrp_source(
-        	",".join(("", "")),
+        	",".join(("", "recv_frame_size=8192,num_recv_frames=128")),
         	uhd.stream_args(
         		cpu_format="fc32",
         		channels=range(1),
