@@ -48,6 +48,5 @@ This project builds on reverse engineering work done by Woody [@tb69rr](https://
 and Tim [@bjt2n3904](https://twitter.com/bjt2n3904), and presented in the
 Wireless Village at DEF CON 25: https://www.youtube.com/watch?v=pKP74WGa_s0
 
-[`reedsolo.py`](https://pypi.org/project/reedsolo/) was written by Tomer Filiba
-and released into the public domain. The only adjustment I made was to change
-the generator polynomial on line 118.
+[`reedsolo.py`](https://github.com/tomerfiliba/reedsolomon) was written by Tomer
+Filiba and released into the public domain.

@@ -119,7 +119,7 @@ def encode_packet(preamble_len, in_bytes):
     length = len(in_bytes) + 2 + 8
     packet = bytearray([length]) + in_bytes
     packet += struct.pack(">H", crc16(packet) ^ 0xabcd)
-    rs = reedsolo.RSCodec(8)
+    rs = reedsolo.RSCodec(nsym=8, fcr=1)
     return bytearray([0xaa]*preamble_len + [0x2d, 0xd4]) + rs.encode(packet)
 
 
@@ -213,6 +213,11 @@ def vco(center_freq, control_chan, data_chan, packets):
         data_chan = (data_chan + 1) % len(DATA_CHANNELS)
     vco += [data_offset]*3
     return vco
+
+
+def correct_packet(packet):
+    rs = reedsolo.RSCodec(nsym=8, fcr=1)
+    return rs.decode(packet)
 
 
 def decode_tlv(tag, value):
