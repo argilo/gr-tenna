@@ -1,5 +1,6 @@
 import numpy as np
 from gnuradio import gr
+import gotenna_packet
 
 
 class blk(gr.sync_block):
@@ -29,9 +30,9 @@ class blk(gr.sync_block):
             for i in range(length + 1):
                 packet.append(int(self.bits[i*8:i*8 + 8], 2))
 
-            print " ".join(["{0:02x}".format(b) for b in packet])
-            print repr(packet)
             print
+            print " ".join(["{0:02x}".format(b) for b in packet])
+            gotenna_packet.decode_tlvs(packet[3:])
 
             self.bits = self.bits[(length + 1) * 8:]
             idx = self.bits[:-2048].find(self.prefix)
