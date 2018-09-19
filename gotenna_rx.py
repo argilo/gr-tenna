@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Gotenna Rx
-# Generated: Wed Sep 19 15:18:09 2018
+# Generated: Wed Sep 19 15:20:51 2018
 ##################################################
 
 from gnuradio import analog
@@ -46,7 +46,7 @@ class gotenna_rx(gr.top_block):
         )
         self.uhd_usrp_source_0.set_samp_rate(samp_rate)
         self.uhd_usrp_source_0.set_center_freq(915000000, 0)
-        self.uhd_usrp_source_0.set_gain(25, 0)
+        self.uhd_usrp_source_0.set_gain(5, 0)
         self.uhd_usrp_source_0.set_antenna('TX/RX', 0)
         self.rational_resampler_xxx_0 = filter.rational_resampler_fff(
                 interpolation=1,

@@ -590,7 +590,7 @@ class blk(gr.sync_block):
     </param>
     <param>
       <key>gain0</key>
-      <value>25</value>
+      <value>5</value>
     </param>
     <param>
       <key>lo_export0</key>
