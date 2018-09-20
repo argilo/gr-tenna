@@ -19,10 +19,13 @@
 #
 
 import argparse
-from gotenna_rx import gotenna_rx
-from gotenna_tx import gotenna_tx
+from gotenna_rx_usrp import gotenna_rx_usrp
+from gotenna_tx_usrp import gotenna_tx_usrp
+from gotenna_rx_hackrf import gotenna_rx_hackrf
+from gotenna_tx_hackrf import gotenna_tx_hackrf
 
 parser = argparse.ArgumentParser(description='Receive or transmit goTenna messages.')
+parser.add_argument('--device', choices=['usrp', 'hackrf'], default='usrp')
 subparsers = parser.add_subparsers()
 parser_rx = subparsers.add_parser('rx', help='receive messages')
 parser_tx = subparsers.add_parser('tx', help='transmit a message')
@@ -35,14 +38,20 @@ args = parser.parse_args()
 print(args)
 
 if hasattr(args, 'message'):
-    tb = gotenna_tx()
+    if args.device == 'usrp':
+        tb = gotenna_tx_usrp()
+    elif args.device == 'hackrf':
+        tb = gotenna_tx_hackrf()
     tb.set_sender_gid(args.gid)
     tb.set_initials(args.initials)
     tb.set_message(args.message)
     tb.start()
     tb.wait()
 else:
-    tb = gotenna_rx()
+    if args.device == 'usrp':
+        tb = gotenna_rx_usrp()
+    elif args.device == 'hackrf':
+        tb = gotenna_rx_hackrf()
     tb.start()
     try:
         raw_input('Press Enter to quit: ')

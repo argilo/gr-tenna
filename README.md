@@ -24,12 +24,13 @@ gr-tenna
 
 The goal of this project is to implement the goTenna Mesh protocol in GNU Radio.
 So far there are flow graphs for receiving and transmitting "Shout" messages
-using a USRP B200.
+using a USRP B200 or HackRF.
 
 ## Usage
 
-The `gotenna.py` script invokes either a receive flowgraph (gotenna_rx.grc) or
-a transmit flowgraph (gotenna_tx.grc) depending on the command line arguments.
+The `gotenna.py` script invokes either a receive flowgraph or a transmit
+flowgraph depending on the command line arguments. By default, the USRP
+flowgraphs are used. If you're using a HackRF, add the `--device hackrf` option.
 
 To receive messages:
 ```
