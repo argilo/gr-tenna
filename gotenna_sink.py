@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from gnuradio import gr
 import gotenna_packet
@@ -30,15 +31,15 @@ class blk(gr.sync_block):
             for i in range(length + 1):
                 packet.append(int(self.bits[i*8:i*8 + 8], 2))
             try:
-                print
-                print "Raw bytes: " + " ".join(["{0:02x}".format(b) for b in packet])
+                print()
+                print("Raw bytes: " + " ".join(["{0:02x}".format(b) for b in packet]))
 
                 packet = gotenna_packet.correct_packet(packet)
-                print "Corrected: " + " ".join(["{0:02x}".format(b) for b in packet])
-                print
+                print("Corrected: " + " ".join(["{0:02x}".format(b) for b in packet]))
+                print()
                 gotenna_packet.decode_tlvs(packet[3:])
             except Exception as err:
-                print "Error decoding packet: " + str(err)
+                print("Error decoding packet: " + str(err))
 
             self.bits = self.bits[(length + 1) * 8:]
             idx = self.bits[:-2048].find(self.prefix)

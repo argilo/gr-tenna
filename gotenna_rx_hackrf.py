@@ -1,28 +1,27 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 #
 # SPDX-License-Identifier: GPL-3.0
 #
-##################################################
 # GNU Radio Python Flow Graph
 # Title: Gotenna Rx Hackrf
-# Generated: Thu Sep 20 12:01:38 2018
-# GNU Radio version: 3.7.12.0
-##################################################
+# GNU Radio version: 3.8.0.0-rc2
 
 from gnuradio import analog
-from gnuradio import digital
-from gnuradio import eng_notation
-from gnuradio import filter
-from gnuradio import gr
-from gnuradio.eng_option import eng_option
-from gnuradio.filter import firdes
-from optparse import OptionParser
-import gotenna_sink
 import math
+from gnuradio import digital
+from gnuradio import filter
+from gnuradio.filter import firdes
+from gnuradio import gr
+import sys
+import signal
+from argparse import ArgumentParser
+from gnuradio.eng_arg import eng_float, intx
+from gnuradio import eng_notation
+import gotenna_sink
 import osmosdr
 import time
-
 
 class gotenna_rx_hackrf(gr.top_block):
 
@@ -44,23 +43,32 @@ class gotenna_rx_hackrf(gr.top_block):
                 interpolation=1,
                 decimation=4,
                 taps=None,
-                fractional_bw=None,
+                fractional_bw=None)
+        self.osmosdr_source_0 = osmosdr.source(
+            args="numchan=" + str(1) + " " + ''
         )
-        self.osmosdr_source_0 = osmosdr.source( args="numchan=" + str(1) + " " + '' )
+        self.osmosdr_source_0.set_time_unknown_pps(osmosdr.time_spec_t())
         self.osmosdr_source_0.set_sample_rate(samp_rate)
         self.osmosdr_source_0.set_center_freq(915000000, 0)
         self.osmosdr_source_0.set_freq_corr(0, 0)
-        self.osmosdr_source_0.set_dc_offset_mode(0, 0)
-        self.osmosdr_source_0.set_iq_balance_mode(0, 0)
-        self.osmosdr_source_0.set_gain_mode(False, 0)
         self.osmosdr_source_0.set_gain(1, 0)
-        self.osmosdr_source_0.set_if_gain(1, 0)
+        self.osmosdr_source_0.set_if_gain(16, 0)
         self.osmosdr_source_0.set_bb_gain(1, 0)
         self.osmosdr_source_0.set_antenna('', 0)
         self.osmosdr_source_0.set_bandwidth(26000000, 0)
-
         self.gotenna_sink = gotenna_sink.blk()
-        self.digital_symbol_sync_xx_0 = digital.symbol_sync_ff(digital.TED_DANDREA_AND_MENGALI_GEN_MSK, float(chan_spacing) / baud_rate / 4, 0.05, 1.5, 1.0, 0.001 * float(chan_spacing) / baud_rate / 4, 1, digital.constellation_bpsk().base(), digital.IR_MMSE_8TAP, 128, ([]))
+        self.digital_symbol_sync_xx_0 = digital.symbol_sync_ff(
+            digital.TED_DANDREA_AND_MENGALI_GEN_MSK,
+            float(chan_spacing) / baud_rate / 4,
+            0.05,
+            1.5,
+            1.0,
+            0.001 * float(chan_spacing) / baud_rate / 4,
+            1,
+            digital.constellation_bpsk().base(),
+            digital.IR_MMSE_8TAP,
+            128,
+            [])
         self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
         self.dc_blocker_xx_0 = filter.dc_blocker_ff(512, True)
         self.analog_quadrature_demod_cf_0 = analog.quadrature_demod_cf(chan_spacing/(2*math.pi*fsk_deviation_hz))
@@ -105,12 +113,21 @@ class gotenna_rx_hackrf(gr.top_block):
         self.baud_rate = baud_rate
 
 
-def main(top_block_cls=gotenna_rx_hackrf, options=None):
 
+def main(top_block_cls=gotenna_rx_hackrf, options=None):
     tb = top_block_cls()
+
+    def sig_handler(sig=None, frame=None):
+        tb.stop()
+        tb.wait()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, sig_handler)
+    signal.signal(signal.SIGTERM, sig_handler)
+
     tb.start()
     try:
-        raw_input('Press Enter to quit: ')
+        input('Press Enter to quit: ')
     except EOFError:
         pass
     tb.stop()

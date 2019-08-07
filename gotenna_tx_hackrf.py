@@ -1,28 +1,27 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 #
 # SPDX-License-Identifier: GPL-3.0
 #
-##################################################
 # GNU Radio Python Flow Graph
 # Title: Gotenna Tx Hackrf
-# Generated: Thu Sep 20 12:05:13 2018
-# GNU Radio version: 3.7.12.0
-##################################################
+# GNU Radio version: 3.8.0.0-rc2
 
 from gnuradio import blocks
 from gnuradio import digital
-from gnuradio import eng_notation
 from gnuradio import filter
-from gnuradio import gr
-from gnuradio.eng_option import eng_option
 from gnuradio.filter import firdes
-from optparse import OptionParser
+from gnuradio import gr
+import sys
+import signal
+from argparse import ArgumentParser
+from gnuradio.eng_arg import eng_float, intx
+from gnuradio import eng_notation
 import gotenna_packet
 import math
 import osmosdr
 import time
-
 
 class gotenna_tx_hackrf(gr.top_block):
 
@@ -51,9 +50,11 @@ class gotenna_tx_hackrf(gr.top_block):
                 interpolation=interp,
                 decimation=1,
                 taps=None,
-                fractional_bw=None,
+                fractional_bw=None)
+        self.osmosdr_sink_0 = osmosdr.sink(
+            args="numchan=" + str(1) + " " + ''
         )
-        self.osmosdr_sink_0 = osmosdr.sink( args="numchan=" + str(1) + " " + '' )
+        self.osmosdr_sink_0.set_time_unknown_pps(osmosdr.time_spec_t())
         self.osmosdr_sink_0.set_sample_rate(samp_rate)
         self.osmosdr_sink_0.set_center_freq(center_freq, 0)
         self.osmosdr_sink_0.set_freq_corr(0, 0)
@@ -62,14 +63,12 @@ class gotenna_tx_hackrf(gr.top_block):
         self.osmosdr_sink_0.set_bb_gain(20, 0)
         self.osmosdr_sink_0.set_antenna('', 0)
         self.osmosdr_sink_0.set_bandwidth(0, 0)
-
         self.digital_gfsk_mod_0 = digital.gfsk_mod(
-        	samples_per_symbol=samp_per_sym,
-        	sensitivity=1.0,
-        	bt=0.5,
-        	verbose=False,
-        	log=False,
-        )
+            samples_per_symbol=samp_per_sym,
+            sensitivity=1.0,
+            bt=0.5,
+            verbose=False,
+            log=False)
         self.blocks_vector_source_x_2 = blocks.vector_source_f(gotenna_packet.vco(center_freq, control_chan, data_chan, packets)+[0]*silence_time, False, 1, [])
         self.blocks_vector_source_x_1 = blocks.vector_source_c(gotenna_packet.envelope(packets)+[0]*silence_time, False, 1, [])
         self.blocks_vector_source_x_0 = blocks.vector_source_b(gotenna_packet.gfsk_bytes(packets)+[0]*silence_time, False, 1, [])
@@ -108,8 +107,8 @@ class gotenna_tx_hackrf(gr.top_block):
     def set_samp_per_sym(self, samp_per_sym):
         self.samp_per_sym = samp_per_sym
         self.set_samp_rate(24000 * self.samp_per_sym * self.interp)
-        self.blocks_repeat_1.set_interpolation(8 * self.samp_per_sym * self.interp)
         self.blocks_repeat_0.set_interpolation(8 * self.samp_per_sym)
+        self.blocks_repeat_1.set_interpolation(8 * self.samp_per_sym * self.interp)
 
     def get_message(self):
         return self.message
@@ -146,9 +145,9 @@ class gotenna_tx_hackrf(gr.top_block):
 
     def set_silence_time(self, silence_time):
         self.silence_time = silence_time
-        self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
-        self.blocks_vector_source_x_1.set_data(gotenna_packet.envelope(self.packets)+[0]*self.silence_time, [])
         self.blocks_vector_source_x_0.set_data(gotenna_packet.gfsk_bytes(self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_1.set_data(gotenna_packet.envelope(self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -162,9 +161,9 @@ class gotenna_tx_hackrf(gr.top_block):
 
     def set_packets(self, packets):
         self.packets = packets
-        self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
-        self.blocks_vector_source_x_1.set_data(gotenna_packet.envelope(self.packets)+[0]*self.silence_time, [])
         self.blocks_vector_source_x_0.set_data(gotenna_packet.gfsk_bytes(self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_1.set_data(gotenna_packet.envelope(self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
 
     def get_control_chan(self):
         return self.control_chan
@@ -178,13 +177,22 @@ class gotenna_tx_hackrf(gr.top_block):
 
     def set_center_freq(self, center_freq):
         self.center_freq = center_freq
-        self.osmosdr_sink_0.set_center_freq(self.center_freq, 0)
         self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
+        self.osmosdr_sink_0.set_center_freq(self.center_freq, 0)
+
 
 
 def main(top_block_cls=gotenna_tx_hackrf, options=None):
-
     tb = top_block_cls()
+
+    def sig_handler(sig=None, frame=None):
+        tb.stop()
+        tb.wait()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, sig_handler)
+    signal.signal(signal.SIGTERM, sig_handler)
+
     tb.start()
     tb.wait()
 
