@@ -68,18 +68,6 @@ blocks:
     coordinate: [224, 524]
     rotation: 0
     state: enabled
-- name: initials
-  id: variable
-  parameters:
-    comment: ''
-    value: '"VE3IRR"'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [408, 60]
-    rotation: 0
-    state: enabled
 - name: interp
   id: variable
   parameters:
@@ -92,26 +80,15 @@ blocks:
     coordinate: [8, 460]
     rotation: 0
     state: enabled
-- name: message
-  id: variable
-  parameters:
-    comment: ''
-    value: '"Hello world!"'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [512, 60]
-    rotation: 0
-    state: enabled
 - name: packets
   id: variable
   parameters:
     comment: ''
-    value: gotenna_packet.encode_packets(2, gotenna_packet.encode_encrypted_payload(93100711244021,
-      93100712457340, 1, bytearray(a^b for a,b in zip([0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 4, 0, 0, 0, 0, 0, 0, 193, 198], [0xae, 0x95, 0x6c, 0x00, 0xd2, 0x8b, 0x02,
-      0x12, 0x5b, 0x1b, 0xa3, 0x88, 0xfc, 0xb8, 0x5a, 0x31, 0xe2, 0x7f, 0xe7]))))
+    value: gotenna_packet.encode_packets(2, gotenna_packet.encode_encrypted_payload(app_id,
+      93100711244021, 93100712457340, 1, bytearray(a^b for a,b in zip([0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 193, 198], [0xae, 0x95, 0x6c, 0x00, 0xd2,
+      0x8b, 0x02, 0x12, 0x5b, 0x1b, 0xa3, 0x88, 0xfc, 0xb8, 0x5a, 0x31, 0xe2, 0x7f,
+      0xe7]))))
   states:
     bus_sink: false
     bus_source: false
@@ -123,7 +100,8 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: gotenna_packet.encode_shout_packets(data_chan, sender_gid, initials, message)
+    value: gotenna_packet.encode_shout_packets(data_chan, app_id, sender_gid, initials,
+      message)
   states:
     bus_sink: false
     bus_source: false
@@ -155,18 +133,23 @@ blocks:
     coordinate: [8, 396]
     rotation: 0
     state: enabled
-- name: sender_gid
-  id: variable
+- name: app_id
+  id: parameter
   parameters:
+    alias: ''
     comment: ''
-    value: '1234567890'
+    hide: none
+    label: App ID
+    short_id: ''
+    type: intx
+    value: '0x3fff'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [296, 60]
+    coordinate: [296, 44.0]
     rotation: 0
-    state: enabled
+    state: true
 - name: blocks_multiply_xx_0
   id: blocks_multiply_xx
   parameters:
@@ -363,6 +346,40 @@ blocks:
     coordinate: [8, 140]
     rotation: 0
     state: enabled
+- name: initials
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Sender initials
+    short_id: ''
+    type: str
+    value: VE3IRR
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [520, 44.0]
+    rotation: 0
+    state: true
+- name: message
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Message
+    short_id: ''
+    type: str
+    value: Hello world!
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [656, 44.0]
+    rotation: 0
+    state: true
 - name: rational_resampler_xxx_0
   id: rational_resampler_xxx
   parameters:
@@ -383,6 +400,23 @@ blocks:
     coordinate: [704, 204]
     rotation: 0
     state: enabled
+- name: sender_gid
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Sender GID
+    short_id: ''
+    type: intx
+    value: '1234567890'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [400, 44.0]
+    rotation: 0
+    state: true
 - name: uhd_usrp_sink_0
   id: uhd_usrp_sink
   parameters:

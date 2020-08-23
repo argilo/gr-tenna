@@ -139,8 +139,8 @@ def encode_data_packet(seq_no, segment):
     return encode_packet(DATA_PREAMBLE_LEN, bytearray([2, len(segment), seq_no]) + segment)
 
 
-def encode_dest_gid(type, gid=None):
-    bytes = bytearray([type, 0x3f, 0xff])
+def encode_dest_gid(app_id, type, gid=None):
+    bytes = struct.pack(">BH", type, app_id)
     if gid:
         bytes += struct.pack(">Q", gid)[2:]
     return bytes
@@ -166,9 +166,9 @@ def encode_key_exchange_response(sender_gid, initials, public_key):
     return encode_tlv(ENCRYPTION_INFO, encryption_info) + packet
 
 
-def encode_encrypted_payload(recipient_gid, sender_gid, counter, ciphertext):
+def encode_encrypted_payload(app_id, recipient_gid, sender_gid, counter, ciphertext):
     encryption_info = encode_encryption_info(True, sender_gid, int(time.time()), counter, 0)
-    packet = encode_dest_gid(ONE_TO_ONE_GID, recipient_gid)
+    packet = encode_dest_gid(app_id, ONE_TO_ONE_GID, recipient_gid)
     packet += bytearray([0x00, 0xff, 0x00, 0x00])
     packet += encode_tlv(ENCRYPTION_INFO, encryption_info)
     packet += ciphertext
@@ -185,8 +185,8 @@ def encode_packets(channel, payload):
     return [encode_control_packet(channel, seq_no)] + packets
 
 
-def encode_shout_packets(channel, sender_gid, initials, message):
-    payload = encode_dest_gid(SHOUT_GID) + encode_shout_message(sender_gid, initials, message)
+def encode_shout_packets(channel, app_id, sender_gid, initials, message):
+    payload = encode_dest_gid(app_id, SHOUT_GID) + encode_shout_message(sender_gid, initials, message)
     return encode_packets(channel, payload)
 
 

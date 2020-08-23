@@ -6,7 +6,7 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Gotenna Tx Hackrf
-# GNU Radio version: 3.8.0.0-rc2
+# GNU Radio version: 3.8.2.0
 
 from gnuradio import blocks
 from gnuradio import digital
@@ -23,23 +23,29 @@ import math
 import osmosdr
 import time
 
+
 class gotenna_tx_hackrf(gr.top_block):
 
-    def __init__(self):
+    def __init__(self, app_id=0x3fff, initials='VE3IRR', message='Hello world!', sender_gid=1234567890):
         gr.top_block.__init__(self, "Gotenna Tx Hackrf")
+
+        ##################################################
+        # Parameters
+        ##################################################
+        self.app_id = app_id
+        self.initials = initials
+        self.message = message
+        self.sender_gid = sender_gid
 
         ##################################################
         # Variables
         ##################################################
-        self.sender_gid = sender_gid = 1234567890
         self.samp_per_sym = samp_per_sym = 4
-        self.message = message = "Hello world!"
         self.interp = interp = 20
-        self.initials = initials = "VE3IRR"
         self.data_chan = data_chan = 2
         self.silence_time = silence_time = 5000
         self.samp_rate = samp_rate = 24000 * samp_per_sym * interp
-        self.packets = packets = gotenna_packet.encode_shout_packets(data_chan, sender_gid, initials, message)
+        self.packets = packets = gotenna_packet.encode_shout_packets(data_chan, app_id, sender_gid, initials, message)
         self.control_chan = control_chan = 2
         self.center_freq = center_freq = 926250000
 
@@ -94,12 +100,34 @@ class gotenna_tx_hackrf(gr.top_block):
         self.connect((self.digital_gfsk_mod_0, 0), (self.blocks_multiply_xx_0, 0))
         self.connect((self.rational_resampler_xxx_0, 0), (self.blocks_multiply_xx_1, 0))
 
+
+    def get_app_id(self):
+        return self.app_id
+
+    def set_app_id(self, app_id):
+        self.app_id = app_id
+        self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.app_id, self.sender_gid, self.initials, self.message))
+
+    def get_initials(self):
+        return self.initials
+
+    def set_initials(self, initials):
+        self.initials = initials
+        self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.app_id, self.sender_gid, self.initials, self.message))
+
+    def get_message(self):
+        return self.message
+
+    def set_message(self, message):
+        self.message = message
+        self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.app_id, self.sender_gid, self.initials, self.message))
+
     def get_sender_gid(self):
         return self.sender_gid
 
     def set_sender_gid(self, sender_gid):
         self.sender_gid = sender_gid
-        self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.sender_gid, self.initials, self.message))
+        self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.app_id, self.sender_gid, self.initials, self.message))
 
     def get_samp_per_sym(self):
         return self.samp_per_sym
@@ -110,13 +138,6 @@ class gotenna_tx_hackrf(gr.top_block):
         self.blocks_repeat_0.set_interpolation(8 * self.samp_per_sym)
         self.blocks_repeat_1.set_interpolation(8 * self.samp_per_sym * self.interp)
 
-    def get_message(self):
-        return self.message
-
-    def set_message(self, message):
-        self.message = message
-        self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.sender_gid, self.initials, self.message))
-
     def get_interp(self):
         return self.interp
 
@@ -125,19 +146,12 @@ class gotenna_tx_hackrf(gr.top_block):
         self.set_samp_rate(24000 * self.samp_per_sym * self.interp)
         self.blocks_repeat_1.set_interpolation(8 * self.samp_per_sym * self.interp)
 
-    def get_initials(self):
-        return self.initials
-
-    def set_initials(self, initials):
-        self.initials = initials
-        self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.sender_gid, self.initials, self.message))
-
     def get_data_chan(self):
         return self.data_chan
 
     def set_data_chan(self, data_chan):
         self.data_chan = data_chan
-        self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.sender_gid, self.initials, self.message))
+        self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.app_id, self.sender_gid, self.initials, self.message))
         self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
 
     def get_silence_time(self):
@@ -182,18 +196,40 @@ class gotenna_tx_hackrf(gr.top_block):
 
 
 
+
+def argument_parser():
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--app-id", dest="app_id", type=intx, default=0x3fff,
+        help="Set App ID [default=%(default)r]")
+    parser.add_argument(
+        "--initials", dest="initials", type=str, default='VE3IRR',
+        help="Set Sender initials [default=%(default)r]")
+    parser.add_argument(
+        "--message", dest="message", type=str, default='Hello world!',
+        help="Set Message [default=%(default)r]")
+    parser.add_argument(
+        "--sender-gid", dest="sender_gid", type=intx, default=1234567890,
+        help="Set Sender GID [default=%(default)r]")
+    return parser
+
+
 def main(top_block_cls=gotenna_tx_hackrf, options=None):
-    tb = top_block_cls()
+    if options is None:
+        options = argument_parser().parse_args()
+    tb = top_block_cls(app_id=options.app_id, initials=options.initials, message=options.message, sender_gid=options.sender_gid)
 
     def sig_handler(sig=None, frame=None):
         tb.stop()
         tb.wait()
+
         sys.exit(0)
 
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)
 
     tb.start()
+
     tb.wait()
 
 
