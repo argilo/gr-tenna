@@ -6,7 +6,7 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Gotenna Rx Usrp
-# GNU Radio version: 3.8.0.0-rc2
+# GNU Radio version: 3.8.2.0
 
 from gnuradio import analog
 import math
@@ -23,6 +23,7 @@ from gnuradio import eng_notation
 from gnuradio import uhd
 import time
 import gotenna_sink
+
 
 class gotenna_rx_usrp(gr.top_block):
 
@@ -45,7 +46,7 @@ class gotenna_rx_usrp(gr.top_block):
             uhd.stream_args(
                 cpu_format="fc32",
                 args='',
-                channels=[],
+                channels=list(range(0,1)),
             ),
         )
         self.uhd_usrp_source_0.set_center_freq(915000000, 0)
@@ -87,6 +88,7 @@ class gotenna_rx_usrp(gr.top_block):
         self.connect((self.rational_resampler_xxx_0, 0), (self.digital_symbol_sync_xx_0, 0))
         self.connect((self.uhd_usrp_source_0, 0), (self.blocks_keep_one_in_n_0, 0))
 
+
     def get_samp_rate(self):
         return self.samp_rate
 
@@ -118,18 +120,22 @@ class gotenna_rx_usrp(gr.top_block):
 
 
 
+
+
 def main(top_block_cls=gotenna_rx_usrp, options=None):
     tb = top_block_cls()
 
     def sig_handler(sig=None, frame=None):
         tb.stop()
         tb.wait()
+
         sys.exit(0)
 
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)
 
     tb.start()
+
     try:
         input('Press Enter to quit: ')
     except EOFError:

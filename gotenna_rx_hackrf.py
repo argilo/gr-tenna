@@ -6,7 +6,7 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Gotenna Rx Hackrf
-# GNU Radio version: 3.8.0.0-rc2
+# GNU Radio version: 3.8.2.0
 
 from gnuradio import analog
 import math
@@ -22,6 +22,7 @@ from gnuradio import eng_notation
 import gotenna_sink
 import osmosdr
 import time
+
 
 class gotenna_rx_hackrf(gr.top_block):
 
@@ -85,6 +86,7 @@ class gotenna_rx_hackrf(gr.top_block):
         self.connect((self.osmosdr_source_0, 0), (self.analog_quadrature_demod_cf_0, 0))
         self.connect((self.rational_resampler_xxx_0, 0), (self.digital_symbol_sync_xx_0, 0))
 
+
     def get_samp_rate(self):
         return self.samp_rate
 
@@ -114,18 +116,22 @@ class gotenna_rx_hackrf(gr.top_block):
 
 
 
+
+
 def main(top_block_cls=gotenna_rx_hackrf, options=None):
     tb = top_block_cls()
 
     def sig_handler(sig=None, frame=None):
         tb.stop()
         tb.wait()
+
         sys.exit(0)
 
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)
 
     tb.start()
+
     try:
         input('Press Enter to quit: ')
     except EOFError:
