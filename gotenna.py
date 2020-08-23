@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2018 Clayton Smith (argilo@gmail.com)
 #
@@ -54,7 +54,7 @@ else:
         tb = gotenna_rx_hackrf()
     tb.start()
     try:
-        raw_input('Press Enter to quit: ')
+        input('Press Enter to quit: ')
     except EOFError:
         pass
     tb.stop()
