@@ -28,20 +28,25 @@ using a USRP B200 or HackRF.
 
 ## Usage
 
-The `gotenna.py` script invokes either a receive flowgraph or a transmit
-flowgraph depending on the command line arguments. By default, the USRP
-flowgraphs are used. If you're using a HackRF, add the `--device hackrf` option.
+To receive messages using a USRP:
+```
+./gotenna_rx_usrp.py
+```
 
-To receive messages:
+To receive messages using a HackRF:
 ```
-./gotenna.py rx
+./gotenna_rx_hackrf.py
 ```
-To transmit a shout message:
+
+To transmit a shout message using a USRP:
 ```
-./gotenna.py tx shout 1234567890 XYZ "Hello world!"
+./gotenna_tx_usrp.py --app-id=0x3fff --sender-gid=1234567890 --initials=XYZ --message="Hello world!"
 ```
-In this example, 1234567890 is the sender's GID, XYZ are the sender's initials,
-and "Hello world!" is the shout message.
+
+To transmit a shout message using a USRP:
+```
+./gotenna_tx_hackrf.py --app-id=0x3fff --sender-gid=1234567890 --initials=XYZ --message="Hello world!"
+```
 
 ## Credits
 
