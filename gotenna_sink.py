@@ -37,7 +37,7 @@ class blk(gr.sync_block):
                 packet = gotenna_packet.correct_packet(packet)
                 print("Corrected: " + " ".join(["{0:02x}".format(b) for b in packet]))
                 print()
-                gotenna_packet.decode_tlvs(packet[3:])
+                gotenna_packet.ingest_packet(packet)
             except Exception as err:
                 print("Error decoding packet: " + str(err))
 
