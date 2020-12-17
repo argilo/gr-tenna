@@ -251,3 +251,70 @@ def decode_tlvs(bytes):
         value = bytes[2:2+length]
         bytes = bytes[2+length:]
         decode_tlv(tag, value)
+
+
+def process_data_frag(bytes, fragIDX):
+    """
+    Process a fragment of a data PDU
+    Unfortunately, since we don't channel-hop. we can't do actual
+      reassembly yet, however we can still extract and display
+      SOME useful information
+    """
+
+    # Only the first fragment can be parsed
+    if fragIDX == 0:
+        # The first byte in the data PDU is the message class
+        if bytes[0] in (2, 3):
+            print("Class: " + ("SHOUT" if bytes[0] == 2 else "EMERG"))
+            appID, = struct.unpack(">H", bytes[1:3])
+            print("AppID: %04x" % appID)
+            skipbytes = 3  # message is SHOUT or EMERG
+        else:
+            print("Class: " + ("P-2-P" if bytes[0] == 0 else "GROUP"))
+            appID, dGIDHi, dGIDLo, = struct.unpack(">HHL", bytes[1:9])
+            print("AppID: %04x" % appID)
+            print("Dest. GID: %d" % ((dGIDHi << 32) + dGIDLo))
+            skipbytes = 13  # message is P-2-P or GROUP
+
+        decode_tlvs(bytes[skipbytes:])
+
+    else:
+        print("(incomplete)")
+
+
+def ingest_packet(bytes):
+
+    # CRC check
+    packetCRC, = struct.unpack(">H", bytes[-2:])
+    if packetCRC != (crc16(bytes[:-2]) ^ 0xabcd):
+        print("RX CRC ERROR")
+        return
+    # Strip CRC
+    bytes = bytes[:-2]
+
+    # Second byte inidicates packet type
+    if bytes[1] == 1:
+        # "SYNC" packet - contains data channel index and TTL data
+        chIDX, frags, iniTTL, curTTL = struct.unpack("BBBB", bytes[2:6])
+        print("RX SYNC(1): chIDX=%d, frags=%d, iniTTL=%d, curTTL=%d" %
+              (chIDX, frags, iniTTL, curTTL))
+        # in real life, hop to index ++chIDX in datachan map
+        #  to receive first data packet of this transmission
+
+    elif bytes[1] == 3:
+        # "ACK" packet - contains message hash ID and number of hops
+        hashID, hopTTL, curTTL = struct.unpack(">HBB", bytes[2:6])
+        print("RX ACK (3): hash=0x%04x, TTL/hop(?)=0x%x, curTTL=%d" %
+              (hashID, hopTTL, curTTL))
+
+    elif bytes[1] == 2:
+        # "DATA" packet - contains message data, may be fragmented
+        datalen, fragIDX = struct.unpack("BB", bytes[2:4])
+        print("RX DATA(2): len=%d, fragIDX=%d" % (datalen, fragIDX))
+        # strip first 4 bytes and send to reassembly
+        process_data_frag(bytes[4:], fragIDX)
+        # in real life, hop to index ++chIDX in datachan map
+        #  to receive *next* data packet of this transmission
+
+    else:
+        print("RX TYPE %d UNKNOWN" % bytes[1])
