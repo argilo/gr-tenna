@@ -176,7 +176,7 @@ blocks:
       Raw bytes: \" + \" \".join([\"{0:02x}\".format(b) for b in packet]))\n\n   \
       \             packet = gotenna_packet.correct_packet(packet)\n             \
       \   print(\"Corrected: \" + \" \".join([\"{0:02x}\".format(b) for b in packet]))\n\
-      \                print()\n                gotenna_packet.decode_tlvs(packet[3:])\n\
+      \                print()\n                gotenna_packet.ingest_packet(packet)\n\
       \            except Exception as err:\n                print(\"Error decoding\
       \ packet: \" + str(err))\n\n            self.bits = self.bits[(length + 1) *\
       \ 8:]\n            idx = self.bits[:-2048].find(self.prefix)\n\n        self.bits\
