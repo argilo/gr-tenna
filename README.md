@@ -43,7 +43,7 @@ To transmit a shout message using a USRP:
 ./gotenna_tx_usrp.py --app-id=0x3fff --sender-gid=1234567890 --initials=XYZ --message="Hello world!"
 ```
 
-To transmit a shout message using a USRP:
+To transmit a shout message using a HackRF:
 ```
 ./gotenna_tx_hackrf.py --app-id=0x3fff --sender-gid=1234567890 --initials=XYZ --message="Hello world!"
 ```
