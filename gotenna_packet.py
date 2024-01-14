@@ -94,15 +94,15 @@ def compress_point(x, y):
     return bytes([2 | (y & 1)]) + x.to_bytes(48, byteorder="big")
 
 
-def uncompress_point(bytes):
+def uncompress_point(data):
     p = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff
     a = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000fffffffc
     b = 0xb3312fa7e23ee7e4988e056be3f82d19181d9c6efe8141120314088f5013875ac656398d8a2ed19d2a85c8edd3ec2aef
 
-    x = int.from_bytes(bytes[1:], byteorder="big")
+    x = int.from_bytes(data[1:], byteorder="big")
     y_squared = (pow(x, 3, p) + x * a + b) % p
     y = pow(y_squared, (p + 1) // 4, p)
-    if (public_key_bytes[0] & 1) != (y & 1):
+    if (data[0] & 1) != (y & 1):
         y = p - y
     return x, y
 
@@ -116,14 +116,14 @@ def crc16(in_bytes):
 
 def encode_packet(preamble_len, in_bytes):
     length = len(in_bytes) + 2 + 8
-    packet = bytearray([length]) + in_bytes
+    packet = bytes([length]) + in_bytes
     packet += struct.pack(">H", crc16(packet) ^ 0xabcd)
     rs = reedsolo.RSCodec(nsym=8, fcr=1)
-    return bytearray([0xaa]*preamble_len + [0x2d, 0xd4]) + rs.encode(packet)
+    return bytes([0xaa]*preamble_len + [0x2d, 0xd4]) + rs.encode(packet)
 
 
 def encode_tlv(type, value):
-    return bytearray([type, len(value)]) + value
+    return bytes([type, len(value)]) + value
 
 
 def encode_encryption_info(encrypted, sender_gid, timestamp, enc_counter, resend_id):
@@ -131,18 +131,18 @@ def encode_encryption_info(encrypted, sender_gid, timestamp, enc_counter, resend
 
 
 def encode_control_packet(channel, num_data_packets):
-    return encode_packet(CONTROL_PREAMBLE_LEN, bytearray([9, channel, num_data_packets, 1, 1]))
+    return encode_packet(CONTROL_PREAMBLE_LEN, bytes([9, channel, num_data_packets, 1, 1]))
 
 
 def encode_data_packet(seq_no, segment):
-    return encode_packet(DATA_PREAMBLE_LEN, bytearray([2, len(segment), seq_no]) + segment)
+    return encode_packet(DATA_PREAMBLE_LEN, bytes([2, len(segment), seq_no]) + segment)
 
 
 def encode_dest_gid(app_id, type, gid=None):
-    bytes = struct.pack(">BH", type, app_id)
+    data = struct.pack(">BH", type, app_id)
     if gid:
-        bytes += struct.pack(">Q", gid)[2:]
-    return bytes
+        data += struct.pack(">Q", gid)[2:]
+    return data
 
 
 def encode_shout_message(sender_gid, initials, message):
@@ -168,7 +168,7 @@ def encode_key_exchange_response(sender_gid, initials, public_key):
 def encode_encrypted_payload(app_id, recipient_gid, sender_gid, counter, ciphertext):
     encryption_info = encode_encryption_info(True, sender_gid, int(time.time()), counter, 0)
     packet = encode_dest_gid(app_id, ONE_TO_ONE_GID, recipient_gid)
-    packet += bytearray([0x00, 0xff, 0x00, 0x00])
+    packet += bytes([0x00, 0xff, 0x00, 0x00])
     packet += encode_tlv(ENCRYPTION_INFO, encryption_info)
     packet += ciphertext
     return packet
@@ -190,10 +190,10 @@ def encode_shout_packets(channel, app_id, sender_gid, initials, message):
 
 
 def gfsk_bytes(packets):
-    bytes = [0]*HOP_TIME_1 + list(packets[0]) + [0]*HOP_TIME_1
+    data = [0]*HOP_TIME_1 + list(packets[0]) + [0]*HOP_TIME_1
     for packet in packets[1:]:
-        bytes += list(packet) + [0]*HOP_TIME_2
-    return bytes
+        data += list(packet) + [0]*HOP_TIME_2
+    return data
 
 
 def envelope(packets):
@@ -242,18 +242,18 @@ def decode_tlv(tag, value):
         print("Tag: " + str(tag) + " value: " + value.hex())
 
 
-def decode_tlvs(bytes):
-    while len(bytes) >= 2:
-        tag = bytes[0]
-        length = bytes[1]
-        if 2 + length > len(bytes):
+def decode_tlvs(data):
+    while len(data) >= 2:
+        tag = data[0]
+        length = data[1]
+        if 2 + length > len(data):
             break
-        value = bytes[2:2+length]
-        bytes = bytes[2+length:]
+        value = data[2:2+length]
+        data = data[2+length:]
         decode_tlv(tag, value)
 
 
-def process_data_frag(bytes, fragIDX):
+def process_data_frag(data, fragIDX):
     """
     Process a fragment of a data PDU
     Unfortunately, since we don't channel-hop. we can't do actual
@@ -264,70 +264,70 @@ def process_data_frag(bytes, fragIDX):
     # Only the first fragment can be parsed
     if fragIDX == 0:
         # The first byte in the data PDU is the message class
-        if bytes[0] in (2, 3):
-            print("Class: " + ("SHOUT" if bytes[0] == 2 else "EMERG"))
-            appID, = struct.unpack(">H", bytes[1:3])
+        if data[0] in (2, 3):
+            print("Class: " + ("SHOUT" if data[0] == 2 else "EMERG"))
+            appID, = struct.unpack(">H", data[1:3])
             print(f"AppID: {appID:04x}")
             skipbytes = 3  # message is SHOUT or EMERG
         else:
-            print("Class: " + ("P-2-P" if bytes[0] == 0 else "GROUP"))
-            appID, dGIDHi, dGIDLo, = struct.unpack(">HHL", bytes[1:9])
+            print("Class: " + ("P-2-P" if data[0] == 0 else "GROUP"))
+            appID, dGIDHi, dGIDLo, = struct.unpack(">HHL", data[1:9])
             print(f"AppID: {appID:04x}")
             print(f"Dest. GID: {(dGIDHi << 32) + dGIDLo}")
             skipbytes = 13  # message is P-2-P or GROUP
 
-        decode_tlvs(bytes[skipbytes:])
+        decode_tlvs(data[skipbytes:])
 
     else:
         print("(incomplete)")
 
 
-def ingest_packet(bytes):
+def ingest_packet(data):
 
     # CRC check
-    packetCRC, = struct.unpack(">H", bytes[-2:])
-    diff = packetCRC ^ crc16(bytes[:-2])
+    packetCRC, = struct.unpack(">H", data[-2:])
+    diff = packetCRC ^ crc16(data[:-2])
     if diff not in (0x0000, 0xabcd):
         print("RX CRC ERROR")
         return
     # Strip CRC
-    bytes = bytes[:-2]
+    data = data[:-2]
 
-    packet_type = bytes[1]
+    packet_type = data[1]
 
     if packet_type == 0x01:
         # Gotenna Mesh "SYNC" packet - contains data channel index and TTL data
-        chIDX, frags, iniTTL, curTTL = struct.unpack("BBBB", bytes[2:6])
-        print(f"RX SYNC (0x{bytes[1]:02x}): chIDX={chIDX}, frags={frags}, iniTTL={iniTTL}, curTTL={curTTL}")
+        chIDX, frags, iniTTL, curTTL = struct.unpack("BBBB", data[2:6])
+        print(f"RX SYNC (0x{packet_type:02x}): chIDX={chIDX}, frags={frags}, iniTTL={iniTTL}, curTTL={curTTL}")
         # in real life, hop to index ++chIDX in datachan map
         #  to receive first data packet of this transmission
 
     elif packet_type == 0x02:
         # Gotenna Mesh "DATA" packet - contains message data, may be fragmented
-        datalen, fragIDX = struct.unpack("BB", bytes[2:4])
-        print(f"RX DATA (0x{bytes[1]:02x}): len={datalen}, fragIDX={fragIDX}")
+        datalen, fragIDX = struct.unpack("BB", data[2:4])
+        print(f"RX DATA (0x{packet_type:02x}): len={datalen}, fragIDX={fragIDX}")
         # strip first 4 bytes and send to reassembly
-        process_data_frag(bytes[4:], fragIDX)
+        process_data_frag(data[4:], fragIDX)
         # in real life, hop to index ++chIDX in datachan map
         #  to receive *next* data packet of this transmission
 
     elif packet_type == 0x03:
         # Gotenna Mesh "ACK" packet - contains message hash ID and number of hops
-        hashID, hopTTL, curTTL = struct.unpack(">HBB", bytes[2:6])
-        print(f"RX ACK (0x{bytes[1]:02x}): hash=0x{hashID:04x}, TTL/hop(?)=0x{hopTTL:02x}, curTTL={curTTL}")
+        hashID, hopTTL, curTTL = struct.unpack(">HBB", data[2:6])
+        print(f"RX ACK (0x{packet_type:02x}): hash=0x{hashID:04x}, TTL/hop(?)=0x{hopTTL:02x}, curTTL={curTTL}")
 
     elif packet_type in (0x50, 0x90):
         # Gotenna Pro "SYNC" packet
         print()
-        print(f"RX SYNC (0x{bytes[1]:02x}): unknown={bytes[2:].hex()}")
+        print(f"RX SYNC (0x{packet_type:02x}): unknown={data[2:].hex()}")
 
     elif packet_type == 0x20:
         # Gotenna Pro "DATA" packet
-        print(f"RX DATA (0x{bytes[1]:02x}): unknown={bytes[2:].hex()}")
+        print(f"RX DATA (0x{packet_type:02x}): unknown={data[2:].hex()}")
 
     elif packet_type == 0x60:
         # Gotenna Pro "CONT" packet
-        print(f"RX CONT (0x{bytes[1]:02x}): unknown={bytes[2:].hex()}")
+        print(f"RX CONT (0x{packet_type:02x}): unknown={data[2:].hex()}")
 
     else:
-        print(f"RX TYPE 0x{bytes[1]:02x} UNKNOWN")
+        print(f"RX TYPE 0x{packet_type:02x} UNKNOWN")
