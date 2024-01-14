@@ -294,27 +294,41 @@ def ingest_packet(bytes):
     # Strip CRC
     bytes = bytes[:-2]
 
-    # Second byte inidicates packet type
-    if bytes[1] == 0x01:
-        # "SYNC" packet - contains data channel index and TTL data
+    packet_type = bytes[1]
+
+    if packet_type == 0x01:
+        # Gotenna Mesh "SYNC" packet - contains data channel index and TTL data
         chIDX, frags, iniTTL, curTTL = struct.unpack("BBBB", bytes[2:6])
         print(f"RX SYNC (0x{bytes[1]:02x}): chIDX={chIDX}, frags={frags}, iniTTL={iniTTL}, curTTL={curTTL}")
         # in real life, hop to index ++chIDX in datachan map
         #  to receive first data packet of this transmission
 
-    elif bytes[1] == 0x03:
-        # "ACK" packet - contains message hash ID and number of hops
-        hashID, hopTTL, curTTL = struct.unpack(">HBB", bytes[2:6])
-        print(f"RX ACK (0x{bytes[1]:02x}): hash=0x{hashID:04x}, TTL/hop(?)=0x{hopTTL:02x}, curTTL={curTTL}")
-
-    elif bytes[1] == 0x02:
-        # "DATA" packet - contains message data, may be fragmented
+    elif packet_type == 0x02:
+        # Gotenna Mesh "DATA" packet - contains message data, may be fragmented
         datalen, fragIDX = struct.unpack("BB", bytes[2:4])
         print(f"RX DATA (0x{bytes[1]:02x}): len={datalen}, fragIDX={fragIDX}")
         # strip first 4 bytes and send to reassembly
         process_data_frag(bytes[4:], fragIDX)
         # in real life, hop to index ++chIDX in datachan map
         #  to receive *next* data packet of this transmission
+
+    elif packet_type == 0x03:
+        # Gotenna Mesh "ACK" packet - contains message hash ID and number of hops
+        hashID, hopTTL, curTTL = struct.unpack(">HBB", bytes[2:6])
+        print(f"RX ACK (0x{bytes[1]:02x}): hash=0x{hashID:04x}, TTL/hop(?)=0x{hopTTL:02x}, curTTL={curTTL}")
+
+    elif packet_type in (0x50, 0x90):
+        # Gotenna Pro "SYNC" packet
+        print()
+        print(f"RX SYNC (0x{bytes[1]:02x}): unknown={bytes[2:].hex()}")
+
+    elif packet_type == 0x20:
+        # Gotenna Pro "DATA" packet
+        print(f"RX DATA (0x{bytes[1]:02x}): unknown={bytes[2:].hex()}")
+
+    elif packet_type == 0x60:
+        # Gotenna Pro "CONT" packet
+        print(f"RX CONT (0x{bytes[1]:02x}): unknown={bytes[2:].hex()}")
 
     else:
         print(f"RX TYPE 0x{bytes[1]:02x} UNKNOWN")
