@@ -268,13 +268,13 @@ def process_data_frag(bytes, fragIDX):
         if bytes[0] in (2, 3):
             print("Class: " + ("SHOUT" if bytes[0] == 2 else "EMERG"))
             appID, = struct.unpack(">H", bytes[1:3])
-            print("AppID: %04x" % appID)
+            print(f"AppID: {appID:04x}")
             skipbytes = 3  # message is SHOUT or EMERG
         else:
             print("Class: " + ("P-2-P" if bytes[0] == 0 else "GROUP"))
             appID, dGIDHi, dGIDLo, = struct.unpack(">HHL", bytes[1:9])
-            print("AppID: %04x" % appID)
-            print("Dest. GID: %d" % ((dGIDHi << 32) + dGIDLo))
+            print(f"AppID: {appID:04x}")
+            print(f"Dest. GID: {(dGIDHi << 32) + dGIDLo}")
             skipbytes = 13  # message is P-2-P or GROUP
 
         decode_tlvs(bytes[skipbytes:])
@@ -295,28 +295,26 @@ def ingest_packet(bytes):
     bytes = bytes[:-2]
 
     # Second byte inidicates packet type
-    if bytes[1] == 1:
+    if bytes[1] == 0x01:
         # "SYNC" packet - contains data channel index and TTL data
         chIDX, frags, iniTTL, curTTL = struct.unpack("BBBB", bytes[2:6])
-        print("RX SYNC(1): chIDX=%d, frags=%d, iniTTL=%d, curTTL=%d" %
-              (chIDX, frags, iniTTL, curTTL))
+        print(f"RX SYNC (0x{bytes[1]:02x}): chIDX={chIDX}, frags={frags}, iniTTL={iniTTL}, curTTL={curTTL}")
         # in real life, hop to index ++chIDX in datachan map
         #  to receive first data packet of this transmission
 
-    elif bytes[1] == 3:
+    elif bytes[1] == 0x03:
         # "ACK" packet - contains message hash ID and number of hops
         hashID, hopTTL, curTTL = struct.unpack(">HBB", bytes[2:6])
-        print("RX ACK (3): hash=0x%04x, TTL/hop(?)=0x%x, curTTL=%d" %
-              (hashID, hopTTL, curTTL))
+        print(f"RX ACK (0x{bytes[1]:02x}): hash=0x{hashID:04x}, TTL/hop(?)=0x{hopTTL:02x}, curTTL={curTTL}")
 
-    elif bytes[1] == 2:
+    elif bytes[1] == 0x02:
         # "DATA" packet - contains message data, may be fragmented
         datalen, fragIDX = struct.unpack("BB", bytes[2:4])
-        print("RX DATA(2): len=%d, fragIDX=%d" % (datalen, fragIDX))
+        print(f"RX DATA (0x{bytes[1]:02x}): len={datalen}, fragIDX={fragIDX}")
         # strip first 4 bytes and send to reassembly
         process_data_frag(bytes[4:], fragIDX)
         # in real life, hop to index ++chIDX in datachan map
         #  to receive *next* data packet of this transmission
 
     else:
-        print("RX TYPE %d UNKNOWN" % bytes[1])
+        print(f"RX TYPE 0x{bytes[1]:02x} UNKNOWN")
