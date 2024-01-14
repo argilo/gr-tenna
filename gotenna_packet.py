@@ -216,7 +216,8 @@ def vco(center_freq, control_chan, data_chan, packets):
 
 
 def correct_packet(packet):
-    rs = reedsolo.RSCodec(nsym=8, fcr=1)
+    nsym = 4 if packet[1] in (0x50, 0x90) else 8
+    rs = reedsolo.RSCodec(nsym=nsym, fcr=1)
     return rs.decode(packet)
 
 
@@ -286,7 +287,8 @@ def ingest_packet(bytes):
 
     # CRC check
     packetCRC, = struct.unpack(">H", bytes[-2:])
-    if packetCRC != (crc16(bytes[:-2]) ^ 0xabcd):
+    diff = packetCRC ^ crc16(bytes[:-2])
+    if diff not in (0x0000, 0xabcd):
         print("RX CRC ERROR")
         return
     # Strip CRC
