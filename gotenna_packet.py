@@ -18,7 +18,6 @@
 # along with gr-tenna.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import binascii
 import reedsolo
 import struct
 import time
@@ -87,7 +86,7 @@ HOP_TIME_1 = 33
 HOP_TIME_2 = 27
 
 public_keys = {
-    94011144312926: binascii.unhexlify("035c7706208dddea88cc414a2f81481243d41ad1ac1c5b43763bb54e47a7b9a6f33ad13153a5d5fb0ac0fa12d76fd45b26")
+    94011144312926: bytes.fromhex("035c7706208dddea88cc414a2f81481243d41ad1ac1c5b43763bb54e47a7b9a6f33ad13153a5d5fb0ac0fa12d76fd45b26")
 }
 
 
@@ -226,7 +225,7 @@ def decode_tlv(tag, value):
         print("Initials: " + value.decode())
     elif tag == 4:
         if value[0] == 0xff:
-            print("Message content: " + binascii.hexlify(value).decode())
+            print("Message content: " + value.hex())
         else:
             print("Message content: " + value.decode())
     elif tag == 5:
@@ -240,7 +239,7 @@ def decode_tlv(tag, value):
         print("Encryption Counter: " + str(enc_counter))
         print("Resend ID: " + str(resend_id))
     else:
-        print("Tag: " + str(tag) + " value: " + binascii.hexlify(value).decode())
+        print("Tag: " + str(tag) + " value: " + value.hex())
 
 
 def decode_tlvs(bytes):
