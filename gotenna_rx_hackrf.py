@@ -6,7 +6,7 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Gotenna Rx Hackrf
-# GNU Radio version: 3.10.5.0-rc1
+# GNU Radio version: 3.10.9.2
 
 from gnuradio import analog
 import math
@@ -46,6 +46,7 @@ class gotenna_rx_hackrf(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
+
         self.soapy_hackrf_source_0 = None
         dev = 'driver=hackrf'
         stream_args = ''
@@ -108,6 +109,7 @@ class gotenna_rx_hackrf(gr.top_block):
         self.set_samp_rate(self.chan_spacing * 2)
         self.analog_quadrature_demod_cf_0.set_gain((self.chan_spacing/(2*math.pi*self.fsk_deviation_hz)))
         self.blocks_keep_one_in_n_0.set_n((self.samp_rate // self.chan_spacing))
+        self.digital_symbol_sync_xx_0.set_sps((float(self.chan_spacing) / self.baud_rate / 4))
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -151,6 +153,7 @@ class gotenna_rx_hackrf(gr.top_block):
 
     def set_baud_rate(self, baud_rate):
         self.baud_rate = baud_rate
+        self.digital_symbol_sync_xx_0.set_sps((float(self.chan_spacing) / self.baud_rate / 4))
 
 
 

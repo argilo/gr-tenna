@@ -240,24 +240,20 @@ blocks:
 - name: gotenna_sink
   id: epy_block
   parameters:
-    _source_code: "from __future__ import print_function\nimport numpy as np\nfrom\
-      \ gnuradio import gr\nimport gotenna_packet\n\n\nclass blk(gr.sync_block):\n\
-      \    \"\"\"Embedded Python Block example - a simple multiply const\"\"\"\n\n\
-      \    def __init__(self):\n        gr.sync_block.__init__(\n            self,\n\
+    _source_code: "import numpy as np\nfrom gnuradio import gr\nimport gotenna_packet\n\
+      \n\nclass blk(gr.sync_block):\n    \"\"\"Decode Gotenna Mesh packets\"\"\"\n\
+      \n    def __init__(self):\n        gr.sync_block.__init__(\n            self,\n\
       \            name=\"Gotenna decoder\",\n            in_sig=[np.int8],\n    \
-      \        out_sig=None\n        )\n        # if an attribute with the same name\
-      \ as a parameter is found,\n        # a callback is registered (properties work,\
-      \ too).\n        self.prefix = \"10\"*16 + \"0010110111010100\"\n        self.bits\
-      \ = \"\"\n\n    def work(self, input_items, output_items):\n        self.bits\
-      \ += \"\".join([str(n) for n in input_items[0]])\n\n        idx = self.bits[:-2048].find(self.prefix)\n\
-      \        while idx >= 0:\n            self.bits = self.bits[idx + len(self.prefix):]\n\
-      \            length = int(self.bits[0:8], 2)\n\n            packet = bytearray()\n\
-      \            for i in range(length + 1):\n                packet.append(int(self.bits[i*8:i*8\
-      \ + 8], 2))\n            try:\n                print()\n                print(\"\
-      Raw bytes: \" + \" \".join([\"{0:02x}\".format(b) for b in packet]))\n\n   \
-      \             packet = gotenna_packet.correct_packet(packet)\n             \
-      \   print(\"Corrected: \" + \" \".join([\"{0:02x}\".format(b) for b in packet]))\n\
-      \                print()\n                gotenna_packet.ingest_packet(packet)\n\
+      \        out_sig=None\n        )\n        self.prefix = \"10\"*16 + \"0010110111010100\"\
+      \n        self.bits = \"\"\n\n    def work(self, input_items, output_items):\n\
+      \        self.bits += \"\".join([str(n) for n in input_items[0]])\n\n      \
+      \  idx = self.bits[:-2048].find(self.prefix)\n        while idx >= 0:\n    \
+      \        self.bits = self.bits[idx + len(self.prefix):]\n            length\
+      \ = int(self.bits[0:8], 2)\n\n            packet = bytes(int(self.bits[i*8:i*8\
+      \ + 8], 2) for i in range(length + 1))\n            try:\n                print()\n\
+      \                print(\"Raw bytes: \" + packet.hex())\n\n                packet\
+      \ = gotenna_packet.correct_packet(packet)\n                print(\"Corrected:\
+      \ \" + packet.hex())\n                print()\n                gotenna_packet.ingest_packet(packet)\n\
       \            except Exception as err:\n                print(\"Error decoding\
       \ packet: \" + str(err))\n\n            self.bits = self.bits[(length + 1) *\
       \ 8:]\n            idx = self.bits[:-2048].find(self.prefix)\n\n        self.bits\
@@ -268,8 +264,8 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
-    _io_cache: ('Gotenna decoder', 'blk', [], [('0', 'byte', 1)], [], 'Embedded Python
-      Block example - a simple multiply const', [])
+    _io_cache: ('Gotenna decoder', 'blk', [], [('0', 'byte', 1)], [], 'Decode Gotenna
+      Mesh packets', [])
     bus_sink: false
     bus_source: false
     bus_structure: null
@@ -345,4 +341,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.5.0-rc1
+  grc_version: 3.10.9.2

@@ -1,11 +1,10 @@
-from __future__ import print_function
 import numpy as np
 from gnuradio import gr
 import gotenna_packet
 
 
 class blk(gr.sync_block):
-    """Embedded Python Block example - a simple multiply const"""
+    """Decode Gotenna Mesh packets"""
 
     def __init__(self):
         gr.sync_block.__init__(
@@ -14,8 +13,6 @@ class blk(gr.sync_block):
             in_sig=[np.int8],
             out_sig=None
         )
-        # if an attribute with the same name as a parameter is found,
-        # a callback is registered (properties work, too).
         self.prefix = "10"*16 + "0010110111010100"
         self.bits = ""
 
@@ -27,15 +24,13 @@ class blk(gr.sync_block):
             self.bits = self.bits[idx + len(self.prefix):]
             length = int(self.bits[0:8], 2)
 
-            packet = bytearray()
-            for i in range(length + 1):
-                packet.append(int(self.bits[i*8:i*8 + 8], 2))
+            packet = bytes(int(self.bits[i*8:i*8 + 8], 2) for i in range(length + 1))
             try:
                 print()
-                print("Raw bytes: " + " ".join(["{0:02x}".format(b) for b in packet]))
+                print("Raw bytes: " + packet.hex())
 
                 packet = gotenna_packet.correct_packet(packet)
-                print("Corrected: " + " ".join(["{0:02x}".format(b) for b in packet]))
+                print("Corrected: " + packet.hex())
                 print()
                 gotenna_packet.ingest_packet(packet)
             except Exception as err:
