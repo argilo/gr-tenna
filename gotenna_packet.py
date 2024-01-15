@@ -100,6 +100,8 @@ public_keys = {
     94011144312926: bytes.fromhex("035c7706208dddea88cc414a2f81481243d41ad1ac1c5b43763bb54e47a7b9a6f33ad13153a5d5fb0ac0fa12d76fd45b26")
 }
 
+mesh_fragments = []
+
 
 def compress_point(x, y):
     return bytes([2 | (y & 1)]) + x.to_bytes(48, byteorder="big")
@@ -271,13 +273,16 @@ def decode_tlvs(data):
 def process_data_frag(data, fragIDX):
     """
     Process a fragment of a data PDU
-    Unfortunately, since we don't channel-hop. we can't do actual
-      reassembly yet, however we can still extract and display
-      SOME useful information
     """
 
-    # Only the first fragment can be parsed
-    if fragIDX == 0:
+    if fragIDX >= len(mesh_fragments):
+        print(f"Invalid fragment index: {fragIDX}")
+        return
+
+    mesh_fragments[fragIDX] = data
+    if all(mesh_fragments):
+        data = b"".join(mesh_fragments)
+
         # The first byte in the data PDU is the message class
         if data[0] in (2, 3):
             print("Class: " + ("SHOUT" if data[0] == 2 else "EMERG"))
@@ -293,11 +298,10 @@ def process_data_frag(data, fragIDX):
 
         decode_tlvs(data[skipbytes:])
 
-    else:
-        print("(incomplete)")
-
 
 def ingest_packet(data):
+    global mesh_fragments
+
     data = bytes(data)
 
     # CRC check
@@ -315,6 +319,7 @@ def ingest_packet(data):
         # Gotenna Mesh "SYNC" packet - contains data channel index and TTL data
         chIDX, frags, iniTTL, curTTL = struct.unpack("BBBB", data[2:6])
         print(f"RX SYNC (0x{packet_type:02x}): chIDX={chIDX}, frags={frags}, iniTTL={iniTTL}, curTTL={curTTL}")
+        mesh_fragments = [None] * frags
         # in real life, hop to index ++chIDX in datachan map
         #  to receive first data packet of this transmission
 
