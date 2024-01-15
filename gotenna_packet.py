@@ -73,11 +73,22 @@ GROUP_GID = 1
 SHOUT_GID = 2
 EMERGENCY_GID = 3
 
-TEXT_MESSAGE = "0"
-MESH_KEY_EXCHANGE_REQUEST = "14"
-MESH_KEY_EXCHANGE_RESPONSE = "15"
+TAG_TYPE = 1
+TAG_INITIALS = 3
+TAG_MESSAGE_CONTENT = 4
+TAG_MESSAGE = 5
+TAG_ENCRYPTION_INFO = 251
+TAG_PUBLIC_KEY = 252
 
-ENCRYPTION_INFO = 251
+TEXT_MESSAGE = b"0"
+MESH_KEY_EXCHANGE_REQUEST = b"14"
+MESH_KEY_EXCHANGE_RESPONSE = b"15"
+
+type_names = {
+    TEXT_MESSAGE: "Text message",
+    MESH_KEY_EXCHANGE_REQUEST: "Mesh key exchange request",
+    MESH_KEY_EXCHANGE_RESPONSE: "Mesh key exchange response",
+}
 
 PAYLOAD_SPLIT_LEN = 90
 CONTROL_PREAMBLE_LEN = 93
@@ -146,30 +157,30 @@ def encode_dest_gid(app_id, type, gid=None):
 
 
 def encode_shout_message(sender_gid, initials, message):
-    packet = encode_tlv(1, TEXT_MESSAGE.encode("utf-8"))
-    packet += encode_tlv(3, initials.encode("utf-8"))
-    packet += encode_tlv(4, message.encode("utf-8"))
+    packet = encode_tlv(TAG_TYPE, TEXT_MESSAGE)
+    packet += encode_tlv(TAG_INITIALS, initials.encode("utf-8"))
+    packet += encode_tlv(TAG_MESSAGE_CONTENT, message.encode("utf-8"))
     packet += struct.pack(">H", crc16(packet))
 
     encryption_info = encode_encryption_info(False, sender_gid, int(time.time()), 0, 0)
-    return encode_tlv(ENCRYPTION_INFO, encryption_info) + packet
+    return encode_tlv(TAG_ENCRYPTION_INFO, encryption_info) + packet
 
 
 def encode_key_exchange_response(sender_gid, initials, public_key):
-    packet = encode_tlv(1, MESH_KEY_EXCHANGE_RESPONSE.encode("utf-8"))
-    packet += encode_tlv(3, initials.encode("utf-8"))
-    packet += encode_tlv(252, public_key)
+    packet = encode_tlv(TAG_TYPE, MESH_KEY_EXCHANGE_RESPONSE)
+    packet += encode_tlv(TAG_INITIALS, initials.encode("utf-8"))
+    packet += encode_tlv(TAG_PUBLIC_KEY, public_key)
     packet += struct.pack(">H", crc16(packet))
 
     encryption_info = encode_encryption_info(False, sender_gid, int(time.time()), 0, 0)
-    return encode_tlv(ENCRYPTION_INFO, encryption_info) + packet
+    return encode_tlv(TAG_ENCRYPTION_INFO, encryption_info) + packet
 
 
 def encode_encrypted_payload(app_id, recipient_gid, sender_gid, counter, ciphertext):
     encryption_info = encode_encryption_info(True, sender_gid, int(time.time()), counter, 0)
     packet = encode_dest_gid(app_id, ONE_TO_ONE_GID, recipient_gid)
     packet += bytes([0x00, 0xff, 0x00, 0x00])
-    packet += encode_tlv(ENCRYPTION_INFO, encryption_info)
+    packet += encode_tlv(TAG_ENCRYPTION_INFO, encryption_info)
     packet += ciphertext
     return packet
 
@@ -221,23 +232,27 @@ def correct_packet(packet):
 
 
 def decode_tlv(tag, value):
-    if tag == 3:
+    if tag == TAG_TYPE:
+        print(f"Type: {value.decode()} ({type_names[value]})")
+    elif tag == TAG_INITIALS:
         print("Initials: " + value.decode())
-    elif tag == 4:
+    elif tag == TAG_MESSAGE_CONTENT:
         if value[0] == 0xff:
             print("Message content: " + value.hex())
         else:
             print("Message content: " + value.decode())
-    elif tag == 5:
+    elif tag == TAG_MESSAGE:
         print("Message:")
         decode_tlvs(value)
-    elif tag == ENCRYPTION_INFO:
+    elif tag == TAG_ENCRYPTION_INFO:
         encrypted, sender_gid, timestamp, enc_counter, resend_id = struct.unpack(">BQIHB", value)
         print("Encrypted: " + str(encrypted))
         print("Sender GID: " + str(sender_gid))
         print("Time: " + str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))))
         print("Encryption Counter: " + str(enc_counter))
         print("Resend ID: " + str(resend_id))
+    elif tag == TAG_PUBLIC_KEY:
+        print("Public key: " + value.hex())
     else:
         print("Tag: " + str(tag) + " value: " + value.hex())
 
@@ -283,6 +298,7 @@ def process_data_frag(data, fragIDX):
 
 
 def ingest_packet(data):
+    data = bytes(data)
 
     # CRC check
     packetCRC, = struct.unpack(">H", data[-2:])
