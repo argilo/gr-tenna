@@ -170,10 +170,7 @@ blocks:
       \  idx = self.bits[:-2048].find(self.prefix)\n        while idx >= 0:\n    \
       \        self.bits = self.bits[idx + len(self.prefix):]\n            length\
       \ = int(self.bits[0:8], 2)\n\n            packet = bytes(int(self.bits[i*8:i*8\
-      \ + 8], 2) for i in range(length + 1))\n            try:\n                print()\n\
-      \                print(\"Raw bytes: \" + packet.hex())\n\n                packet\
-      \ = gotenna_packet.correct_packet(packet)\n                print(\"Corrected:\
-      \ \" + packet.hex())\n                print()\n                gotenna_packet.ingest_packet(packet)\n\
+      \ + 8], 2) for i in range(length + 1))\n            try:\n                gotenna_packet.ingest_packet(packet)\n\
       \            except Exception as err:\n                print(\"Error decoding\
       \ packet: \" + str(err))\n\n            self.bits = self.bits[(length + 1) *\
       \ 8:]\n            idx = self.bits[:-2048].find(self.prefix)\n\n        self.bits\

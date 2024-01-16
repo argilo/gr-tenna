@@ -29,12 +29,6 @@ class blk(gr.sync_block):
 
             packet = bytes(int(self.bits[i*8:i*8 + 8], 2) for i in range(length + 1))
             try:
-                print()
-                print("Raw bytes: " + packet.hex())
-
-                packet = gotenna_packet.correct_packet(packet)
-                print("Corrected: " + packet.hex())
-                print()
                 gotenna_packet.ingest_packet(packet)
             except Exception as err:
                 print("Error decoding packet: " + str(err))

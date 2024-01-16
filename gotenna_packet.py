@@ -303,6 +303,14 @@ def ingest_packet(data):
     global mesh_fragments
 
     data = bytes(data)
+    print()
+
+    # Reed-Solomon error correction
+    print(f"Raw bytes: {data.hex()}")
+    data, corrected, errors = correct_packet(data)
+    if len(errors) > 0:
+        print(f"Corrected: {corrected.hex()}")
+        print(f"Corrected {len(errors)} byte error(s).")
 
     # CRC check
     packetCRC, = struct.unpack(">H", data[-2:])
