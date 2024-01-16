@@ -160,11 +160,11 @@ blocks:
 - name: gotenna_sink
   id: epy_block
   parameters:
-    _source_code: "import numpy as np\nfrom gnuradio import gr\nimport gotenna_packet\n\
-      \n\nclass blk(gr.sync_block):\n    \"\"\"Decode Gotenna Mesh packets\"\"\"\n\
-      \n    def __init__(self):\n        gr.sync_block.__init__(\n            self,\n\
-      \            name=\"Gotenna decoder\",\n            in_sig=[np.int8],\n    \
-      \        out_sig=None\n        )\n        self.prefix = \"10\"*16 + \"0010110111010100\"\
+    _source_code: "import numpy as np\nfrom gnuradio import gr\ntry:\n    import gotenna_packet\n\
+      except:\n    pass\n\n\nclass blk(gr.sync_block):\n    \"\"\"Decode Gotenna Mesh\
+      \ packets\"\"\"\n\n    def __init__(self):\n        gr.sync_block.__init__(\n\
+      \            self,\n            name=\"Gotenna decoder\",\n            in_sig=[np.int8],\n\
+      \            out_sig=None\n        )\n        self.prefix = \"10\"*16 + \"0010110111010100\"\
       \n        self.bits = \"\"\n\n    def work(self, input_items, output_items):\n\
       \        self.bits += \"\".join([str(n) for n in input_items[0]])\n\n      \
       \  idx = self.bits[:-2048].find(self.prefix)\n        while idx >= 0:\n    \

@@ -6,7 +6,7 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Gotenna Tx Hackrf
-# GNU Radio version: 3.10.5.0-rc1
+# GNU Radio version: 3.10.9.2
 
 from gnuradio import blocks
 from gnuradio import digital
@@ -20,7 +20,7 @@ from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import soapy
-import gotenna_packet
+import gotenna_tx_hackrf_gotenna_packet as gotenna_packet  # embedded python module
 import math
 
 
@@ -50,10 +50,12 @@ class gotenna_tx_hackrf(gr.top_block):
         self.interp = interp = 20
         self.control_chan = control_chan = 2
         self.center_freq = center_freq = 926250000
+        self.baud_rate = baud_rate = 24000
 
         ##################################################
         # Blocks
         ##################################################
+
         self.soapy_hackrf_sink_0 = None
         dev = 'driver=hackrf'
         stream_args = ''
@@ -66,10 +68,15 @@ class gotenna_tx_hackrf(gr.top_block):
         self.soapy_hackrf_sink_0.set_bandwidth(0, 0)
         self.soapy_hackrf_sink_0.set_frequency(0, center_freq)
         self.soapy_hackrf_sink_0.set_gain(0, 'AMP', False)
-        self.soapy_hackrf_sink_0.set_gain(0, 'VGA', min(max(16, 0.0), 47.0))
-        self.rational_resampler_xxx_0 = filter.rational_resampler_ccc(
+        self.soapy_hackrf_sink_0.set_gain(0, 'VGA', min(max(24, 0.0), 47.0))
+        self.rational_resampler_xxx_1 = filter.rational_resampler_ccc(
                 interpolation=samp_rate,
-                decimation=(24000 * samp_per_sym),
+                decimation=(baud_rate * samp_per_sym * interp),
+                taps=[],
+                fractional_bw=0)
+        self.rational_resampler_xxx_0 = filter.rational_resampler_ccc(
+                interpolation=interp,
+                decimation=1,
                 taps=[],
                 fractional_bw=0)
         self.digital_gfsk_mod_0 = digital.gfsk_mod(
@@ -79,10 +86,10 @@ class gotenna_tx_hackrf(gr.top_block):
             verbose=False,
             log=False,
             do_unpack=True)
-        self.blocks_vector_source_x_2 = blocks.vector_source_f(gotenna_packet.vco(center_freq, control_chan, data_chan, packets)+[0]*silence_time, False, 1, [])
-        self.blocks_vector_source_x_1 = blocks.vector_source_c(gotenna_packet.envelope(packets)+[0]*silence_time, False, 1, [])
-        self.blocks_vector_source_x_0 = blocks.vector_source_b(gotenna_packet.gfsk_bytes(packets)+[0]*silence_time, False, 1, [])
-        self.blocks_vco_c_0 = blocks.vco_c(samp_rate, (2*math.pi), 0.9)
+        self.blocks_vector_source_x_2 = blocks.vector_source_f([0]*silence_time+gotenna_packet.vco(center_freq, control_chan, data_chan, packets)+[0]*silence_time, False, 1, [])
+        self.blocks_vector_source_x_1 = blocks.vector_source_c([0]*silence_time+gotenna_packet.envelope(packets)+[0]*silence_time, False, 1, [])
+        self.blocks_vector_source_x_0 = blocks.vector_source_b([0]*silence_time+gotenna_packet.gfsk_bytes(packets)+[0]*silence_time, False, 1, [])
+        self.blocks_vco_c_0 = blocks.vco_c((baud_rate * samp_per_sym * interp), (2*math.pi), 0.9)
         self.blocks_repeat_1 = blocks.repeat(gr.sizeof_float*1, (8 * samp_per_sym * interp))
         self.blocks_repeat_0 = blocks.repeat(gr.sizeof_gr_complex*1, (8 * samp_per_sym))
         self.blocks_multiply_xx_1 = blocks.multiply_vcc(1)
@@ -93,7 +100,7 @@ class gotenna_tx_hackrf(gr.top_block):
         # Connections
         ##################################################
         self.connect((self.blocks_multiply_xx_0, 0), (self.rational_resampler_xxx_0, 0))
-        self.connect((self.blocks_multiply_xx_1, 0), (self.soapy_hackrf_sink_0, 0))
+        self.connect((self.blocks_multiply_xx_1, 0), (self.rational_resampler_xxx_1, 0))
         self.connect((self.blocks_repeat_0, 0), (self.blocks_multiply_xx_0, 1))
         self.connect((self.blocks_repeat_1, 0), (self.blocks_vco_c_0, 0))
         self.connect((self.blocks_vco_c_0, 0), (self.blocks_multiply_xx_1, 1))
@@ -102,6 +109,7 @@ class gotenna_tx_hackrf(gr.top_block):
         self.connect((self.blocks_vector_source_x_2, 0), (self.blocks_repeat_1, 0))
         self.connect((self.digital_gfsk_mod_0, 0), (self.blocks_multiply_xx_0, 0))
         self.connect((self.rational_resampler_xxx_0, 0), (self.blocks_multiply_xx_1, 0))
+        self.connect((self.rational_resampler_xxx_1, 0), (self.soapy_hackrf_sink_0, 0))
 
 
     def get_app_id(self):
@@ -138,16 +146,16 @@ class gotenna_tx_hackrf(gr.top_block):
     def set_data_chan(self, data_chan):
         self.data_chan = data_chan
         self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.app_id, self.sender_gid, self.initials, self.message))
-        self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_2.set_data([0]*self.silence_time+gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
 
     def get_silence_time(self):
         return self.silence_time
 
     def set_silence_time(self, silence_time):
         self.silence_time = silence_time
-        self.blocks_vector_source_x_0.set_data(gotenna_packet.gfsk_bytes(self.packets)+[0]*self.silence_time, [])
-        self.blocks_vector_source_x_1.set_data(gotenna_packet.envelope(self.packets)+[0]*self.silence_time, [])
-        self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_0.set_data([0]*self.silence_time+gotenna_packet.gfsk_bytes(self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_1.set_data([0]*self.silence_time+gotenna_packet.envelope(self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_2.set_data([0]*self.silence_time+gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -169,9 +177,9 @@ class gotenna_tx_hackrf(gr.top_block):
 
     def set_packets(self, packets):
         self.packets = packets
-        self.blocks_vector_source_x_0.set_data(gotenna_packet.gfsk_bytes(self.packets)+[0]*self.silence_time, [])
-        self.blocks_vector_source_x_1.set_data(gotenna_packet.envelope(self.packets)+[0]*self.silence_time, [])
-        self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_0.set_data([0]*self.silence_time+gotenna_packet.gfsk_bytes(self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_1.set_data([0]*self.silence_time+gotenna_packet.envelope(self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_2.set_data([0]*self.silence_time+gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
 
     def get_interp(self):
         return self.interp
@@ -185,15 +193,21 @@ class gotenna_tx_hackrf(gr.top_block):
 
     def set_control_chan(self, control_chan):
         self.control_chan = control_chan
-        self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_2.set_data([0]*self.silence_time+gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
 
     def get_center_freq(self):
         return self.center_freq
 
     def set_center_freq(self, center_freq):
         self.center_freq = center_freq
-        self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
+        self.blocks_vector_source_x_2.set_data([0]*self.silence_time+gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets)+[0]*self.silence_time, [])
         self.soapy_hackrf_sink_0.set_frequency(0, self.center_freq)
+
+    def get_baud_rate(self):
+        return self.baud_rate
+
+    def set_baud_rate(self, baud_rate):
+        self.baud_rate = baud_rate
 
 
 

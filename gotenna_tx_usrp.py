@@ -6,7 +6,7 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Gotenna Tx Usrp
-# GNU Radio version: 3.10.5.0-rc1
+# GNU Radio version: 3.10.9.2
 
 from gnuradio import blocks
 from gnuradio import digital
@@ -21,7 +21,7 @@ from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import uhd
 import time
-import gotenna_packet
+import gotenna_tx_usrp_gotenna_packet as gotenna_packet  # embedded python module
 import math
 
 
@@ -46,7 +46,8 @@ class gotenna_tx_usrp(gr.top_block):
         self.samp_per_sym = samp_per_sym = 4
         self.interp = interp = 20
         self.data_chan = data_chan = 2
-        self.samp_rate = samp_rate = 24000 * samp_per_sym * interp
+        self.baud_rate = baud_rate = 24000
+        self.samp_rate = samp_rate = baud_rate * samp_per_sym * interp
         self.packets = packets = gotenna_packet.encode_shout_packets(data_chan, app_id, sender_gid, initials, message)
         self.control_chan = control_chan = 2
         self.center_freq = center_freq = 926250000
@@ -54,6 +55,7 @@ class gotenna_tx_usrp(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
+
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
             ",".join(("", "")),
             uhd.stream_args(
@@ -138,7 +140,7 @@ class gotenna_tx_usrp(gr.top_block):
 
     def set_samp_per_sym(self, samp_per_sym):
         self.samp_per_sym = samp_per_sym
-        self.set_samp_rate(24000 * self.samp_per_sym * self.interp)
+        self.set_samp_rate(self.baud_rate * self.samp_per_sym * self.interp)
         self.blocks_repeat_0.set_interpolation((8 * self.samp_per_sym))
         self.blocks_repeat_1.set_interpolation((8 * self.samp_per_sym * self.interp))
 
@@ -147,7 +149,7 @@ class gotenna_tx_usrp(gr.top_block):
 
     def set_interp(self, interp):
         self.interp = interp
-        self.set_samp_rate(24000 * self.samp_per_sym * self.interp)
+        self.set_samp_rate(self.baud_rate * self.samp_per_sym * self.interp)
         self.blocks_repeat_1.set_interpolation((8 * self.samp_per_sym * self.interp))
 
     def get_data_chan(self):
@@ -157,6 +159,13 @@ class gotenna_tx_usrp(gr.top_block):
         self.data_chan = data_chan
         self.set_packets(gotenna_packet.encode_shout_packets(self.data_chan, self.app_id, self.sender_gid, self.initials, self.message))
         self.blocks_vector_source_x_2.set_data(gotenna_packet.vco(self.center_freq, self.control_chan, self.data_chan, self.packets), [])
+
+    def get_baud_rate(self):
+        return self.baud_rate
+
+    def set_baud_rate(self, baud_rate):
+        self.baud_rate = baud_rate
+        self.set_samp_rate(self.baud_rate * self.samp_per_sym * self.interp)
 
     def get_samp_rate(self):
         return self.samp_rate

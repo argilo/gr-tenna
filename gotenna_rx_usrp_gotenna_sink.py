@@ -1,6 +1,9 @@
 import numpy as np
 from gnuradio import gr
-import gotenna_packet
+try:
+    import gotenna_packet
+except:
+    pass
 
 
 class blk(gr.sync_block):
