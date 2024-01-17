@@ -1,0 +1,22 @@
+id: tenna_pdu_to_pcapng
+label: PDU to PcapNG
+category: '[gr-tenna]'
+
+templates:
+  imports: from gnuradio import tenna
+  make: tenna.pdu_to_pcapng(${filename}, ${append})
+
+parameters:
+- id: filename
+  label: Filename
+  dtype: string
+  default: gotenna.pcapng
+- id: append
+  label: Append
+  dtype: bool
+  default: True
+inputs:
+- label: pdu
+  domain: message
+
+file_format: 1

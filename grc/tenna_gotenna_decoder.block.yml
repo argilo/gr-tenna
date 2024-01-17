@@ -1,0 +1,22 @@
+id: tenna_gotenna_decoder
+label: goTenna Decoder
+category: '[gr-tenna]'
+
+templates:
+  imports: from gnuradio import tenna
+  make: tenna.gotenna_decoder(${mode})
+
+parameters:
+- id: mode
+  label: Mode
+  dtype: int
+  default: 0
+inputs:
+- label: in
+  domain: stream
+  dtype: byte
+outputs:
+- label: pdu
+  domain: message
+
+file_format: 1

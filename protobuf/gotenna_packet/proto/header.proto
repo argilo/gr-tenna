@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "gotenna_packet/proto/data_type.proto";
+
+message PBBaseHeader {
+    uint64 sender_gid = 1;
+    string callsign = 2;
+    PBMessageDataType messageType = 3;
+    string keyUuid = 4;
+    bytes iv = 5;
+    PBConversationType conversationType = 6;
+    double timestamp = 7;
+}

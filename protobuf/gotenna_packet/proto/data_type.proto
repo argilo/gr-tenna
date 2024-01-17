@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+enum PBMessageDataType {
+    GROUP_CREATION = 0;
+    MAP_OBJECT = 1;
+    REQUEST = 2;
+    TEXT = 3;
+    FREQUENCY = 4;
+    PING = 5;
+    EMERGENCY_BEACON = 6;
+    PUBLIC_KEY_REQUEST = 7;
+    PUBLIC_KEY_RESPONSE = 8;
+    BROADCAST_QR = 9;
+    PLI = 10;
+    SHARED_LOCATION = 11;
+    COMMS_CHECK = 12;
+    MANUAL_PLI = 13;
+}
+
+enum PBGeofenceType {
+    GEOFENCING_NONE = 0;
+    GEOFENCING_ENTRY = 1;
+    GEOFENCING_EXIT = 2;
+    GEOFENCING_BOTH = 3;
+}
+
+enum PBPowerType {
+    HALF_WATT = 0;
+    ONE_WATT = 1;
+    TWO_WATT = 2;
+    FOUR_WATT = 3;
+    FIVE_WATT = 4;
+}
+
+enum PBBandwidthType {
+    BW_4_84KHZ = 0;
+    BW_7_28KHZ = 1;
+    BW_11_80KHZ = 2;
+}
+
+enum PBPinType {
+    DEFAULT = 0;
+    EMERGENCY = 1;
+    WARNING = 2;
+}
+
+enum PBConversationType {
+    UNKNOWN = 0;
+    COMMAND = 1;
+}

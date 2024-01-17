@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+import "gotenna_packet/proto/data_type.proto";
+
+message PBShapeData {
+    uint32 color = 1;
+    PBGeofenceType geofence_type = 2;
+
+    oneof map_object {
+        PBRouteMessageData route_data = 4;
+        PBPerimeterMessageData perimeter_data = 5;
+        PBCircleMessageData circle_data = 6;
+        PBRectangleMessageData rectangle_data = 7;
+    }
+}
+
+message PBPinData {
+    bytes coordinate = 1;
+    PBPinType pin_type = 2;
+}
+
+message PBRouteMessageData {
+    bytes data_points = 1;
+}
+
+message PBPerimeterMessageData {
+    bytes data_points = 1;
+}
+
+message PBCircleMessageData {
+    bytes center = 1;
+    uint64 radius = 2;
+}
+
+message PBRectangleMessageData {
+    bytes cornerOne = 1;
+    bytes cornerTwo = 2;
+    bytes depth = 3;
+}
+
+message PBCoordinate {
+    double latitude = 1;
+    double longitude = 2;
+}

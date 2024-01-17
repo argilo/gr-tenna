@@ -1,0 +1,4 @@
+cryptography >= 3.1
+protobuf >= 4.21
+reedsolo >= 1.4
+python-pcapng >= 2.0.0

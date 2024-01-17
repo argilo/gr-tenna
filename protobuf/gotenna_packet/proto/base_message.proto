@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+import "gotenna_packet/proto/header.proto";
+
+message PBBaseMessage {
+    PBBaseHeader header = 1;
+    bytes messageData = 2;
+}

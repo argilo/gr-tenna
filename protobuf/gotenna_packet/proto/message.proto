@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+import "gotenna_packet/proto/location.proto";
+import "gotenna_packet/proto/frequency.proto";
+
+message PBMapObjectMessageData {
+    double timestamp = 1;
+    uint64 uuid = 2;
+    string title = 3;
+
+    oneof map_object {
+        PBShapeData shape = 4;
+        PBPinData pin = 5;
+    }
+}
+
+message PBLocationMessageData {
+    bytes coordinate = 1;
+    uint32 pli_sharing_frequency_index = 2;
+    uint32 pli_location_accuracy = 3;
+    double timestamp = 4;
+    string text = 5;
+}
+
+message PBRequestMessageData {
+    string text = 1;
+}
+
+message PBTextMessageData {
+    string text = 1;
+    string uuid = 2;
+}
+
+message PBFrequencyMessageData {
+    string text = 1;
+    PBFrequency frequency = 2;
+}
+
+message PBGroupCreationMessageData {
+    repeated PBGroupMember group_members = 1;
+    message PBGroupMember {
+        uint64 gid = 1;
+    }
+
+    bytes group_shared_key = 2;
+    uint64 group_gid = 3;
+}
+
+message PBPublicKeyMessageData {
+    bytes public_key = 1;
+}
+
+message PBBroadcastQrMessageData {
+    bytes name = 1;
+    bytes uuid = 2;
+    bytes salt = 3;
+    bytes iv = 4;
+    bytes keyData = 5;
+}

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+import "gotenna_packet/proto/data_type.proto";
+
+message PBChannel {
+    uint32 hertz = 1;
+    bool is_control = 2;
+}
+
+message PBFrequency {
+    string id = 1;
+    string title = 2;
+    string call_sign = 3;
+    PBPowerType power = 4;
+    PBBandwidthType bandwidth = 5;
+    bool use_only = 6;
+    repeated PBChannel channels = 7;
+}
