@@ -37,6 +37,8 @@ set(GR_TEST_TARGET_DEPS gnuradio-tenna)
 add_custom_target(
     copy_module_for_tests ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}
-            ${PROJECT_BINARY_DIR}/test_modules/gnuradio/tenna/)
+            ${PROJECT_BINARY_DIR}/test_modules/gnuradio/tenna/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/../gotenna_packet
+            ${PROJECT_BINARY_DIR}/test_modules/gotenna_packet/)
 GR_ADD_TEST(qa_gotenna_decoder ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_gotenna_decoder.py)
 GR_ADD_TEST(qa_pdu_to_pcapng ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_pdu_to_pcapng.py)
